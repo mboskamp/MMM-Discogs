@@ -26,7 +26,7 @@ var finalcallback;
 
 
 function asyncFetch(page, callback) {
-    col.getReleases(fetcher.user, 0, {page: page, per_page: 10}, function (err, data) {
+    col.getReleases(fetcher.user, 0, {page: page, per_page: 100}, function (err, data) {
         items.splice(0, 1);
         asyncTasks.splice(0, 1);
         if (firstPage) {

@@ -24,12 +24,9 @@ Module.register("MMM-Discogs",{
         }else{
             wrapper.id = "discogs-wrapper";
 
-            console.log("/modules/MMM-Discogs/cover/");
-            console.log(__dirname);
-
             var cover = document.createElement("div");
             cover.id = "discogs-cover";
-            cover.setAttribute("style", "background-image: url('/modules/MMM-Discogs/cover/" + this.release.id + ".jpg')");
+            cover.setAttribute("style", "background-image: url('modules/MMM-Discogs/cover/" + this.release.id + ".jpg')");
             wrapper.appendChild(cover);
 
             var descsription = document.createElement("div");
