@@ -1,0 +1,29 @@
+{
+  "name": "mmm-discogs",
+  "version": "1.0.0",
+  "description": "MagicMirror Module for displaying information from your discogs.com profile",
+  "main": "MMM-Discogs.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mboskamp/MMM-Discogs.git"
+  },
+  "keywords": [
+    "magic",
+    "mirror",
+    "module",
+    "discogs"
+  ],
+  "author": "Miklas Boskamp",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mboskamp/MMM-Discogs/issues"
+  },
+  "homepage": "https://github.com/mboskamp/MMM-Discogs#readme",
+  "dependencies": {
+    "async": "^2.1.5",
+    "disconnect": "^1.1.0"
+  }
+}
