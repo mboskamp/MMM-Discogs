@@ -1,28 +1,46 @@
-Module.register("MMM-Discogs",{
+var errors = {
+    noCredentialsError: "Please specify your Discogs API token and username in config.js. Get your API token at https://www.discogs.com/settings/developers",
+    fetchingError: "Error while fetching"
+};
+
+function getRandomRelease(){
+    var ran = Math.floor(Math.random() * (this.ids.length - 1));
+    return this.ids[ran];
+}
+
+Module.register("MMM-Discogs", {
 
     defaults: {
-        apiToken: "iOrDCbhdyeHYnnFmSXoAbaFhFqFkxmSginyKzAyX",
-        username: "TestSubjekt",
-        updateInterval: 7000,
+        updateInterval: 10 * 60 * 1000, //10 minutes
+        fetchInterval: 60 * 60 * 1000, //every hour
         animationSpeed: 750
     },
 
     start: function () {
         Log.info("Starting module: " + this.name);
         var self = this;
-        self.sendSocketNotification("FETCH_NEW", {"apiToken":self.defaults.apiToken, "username": self.defaults.username});
-        setInterval(function() {
-            self.sendSocketNotification("FETCH_NEW", {"apiToken":self.defaults.apiToken, "username": self.defaults.username});
-            self.updateDom(this.defaults.animationSpeed);
-        }, this.defaults.updateInterval);
+
+        if (typeof this.config.apiToken === "undefined" || typeof this.config.username === "undefined") {
+            this.error = errors.noCredentialsError;
+        } else {
+            this.error = false;
+            self.sendSocketNotification("INIT", {
+                "apiToken": self.config.apiToken,
+                "username": self.config.username
+            });
+        }
     },
 
-    getDom: function() {
+    getDom: function () {
         var wrapper = document.createElement("div");
-        if(!this.loaded){
-            wrapper.innerHTML = this.translate("LOADING")
-        }else{
-            wrapper.id = "discogs-wrapper";
+        if (!this.loaded) {
+            if (this.error) {
+                wrapper.innerHTML = this.error;
+            } else {
+                wrapper.innerHTML = this.translate("LOADING");
+            }
+        } else {
+            wrapper.className = "discogs-wrapper";
 
             var cover = document.createElement("div");
             cover.className = "discogs-cover";
@@ -53,15 +71,30 @@ Module.register("MMM-Discogs",{
         return wrapper;
     },
 
-    socketNotificationReceived: function(notification, payload) {
-        if (notification === "NEW_DATA") {
+    socketNotificationReceived: function (notification, payload) {
+        console.log("notification: " + notification);
+        console.log("payload: " + payload);
+        if (notification === "NEW_DATA_RELEASE") {
             this.loaded = true;
             this.release = payload;
+            this.updateDom(this.config.animationSpeed);
+        } else if (notification === "NEW_DATA_IDS") {
+            this.ids = payload;
+            setInterval(function () {
+                this.sendSocketNotification("FETCH_RELEASE", getRandomRelease());
+            }, this.config.updateInterval);
+        } else if (notification === "INIT_COMPLETE") {
+            setInterval(function () {
+                this.sendSocketNotification("FETCH_COLLECTION");
+            }, this.config.fetchInterval);
+        } else if (notification === "ERROR") {
+            this.loaded = false;
+            this.error = errors[payload];
         }
     },
     getStyles: function () {
         return [
-            'style.css'
+            'script.css'
         ];
-    },
+    }
 });
