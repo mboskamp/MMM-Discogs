@@ -16,6 +16,22 @@ module.exports = NodeHelper.create({
         } else if (notification === "LOG"){
             console.log(payload);
         }
+        else if (notification === "FETCH_RELEASE") {
+            this.fetchRelease(payload);
+        }else if(notification === "FETCH_COLLECTION"){
+            this.fetchCollection(payload);
+        }
+    },
+    
+    init: function (config) {
+        console.log("Initializing fetcher");
+        var self = this;
+        fetcher.init(config.apiToken, config.username,function (result) {
+            console.log("Initalization " + result ? "successful" : "failed");
+            if(!result){
+                self.sendSocketNotification("ERROR", "noCredentialsError");
+            }
+        });
     },
 
     initialize: function (config) {

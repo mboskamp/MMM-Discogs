@@ -38,6 +38,7 @@ function asyncFetch(page, callback) {
 };
 
 function allFetchesDone(callback, callback2) {
+    console.log("items length: " + items.length);
     if (items.length == 0) {
         console.log("Fetching collection done. " + ids.length + " records found.");
         util.call(callback, callback2);
@@ -50,6 +51,7 @@ function allFetchesDone(callback, callback2) {
 };
 
 function addItemsAsTask() {
+    console.log("items.length: " + items.length);
     items.forEach(function (item) {
         asyncTasks.push(function (callback) {
             asyncFetch(item, function () {
@@ -98,6 +100,7 @@ function loadImage(callback) {
                 });
             });
         }
+        util.call(callback);
     });
 };
 
