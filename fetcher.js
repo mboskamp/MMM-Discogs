@@ -7,26 +7,20 @@ var util = require('./util.js');
 var appRoot = __dirname;
 
 var fetcher = {};
+fetcher.user = "";
+fetcher.API_TOKEN = "";
+fetcher.discogs;
+
 var ids = [];
 var pages = 1;
 var asyncTasks = [];
 var items = [];
 var firstPage = true;
 
-fetcher.user = "";
-fetcher.API_TOKEN = "";
-var discogs;
-
-var col;
-var db;
-
 var current = {};
 
-var finalcallback;
-
-
 function asyncFetch(page, callback) {
-    col.getReleases(fetcher.user, 0, {page: page, per_page: 100}, function (err, data) {
+    fetcher.col.getReleases(fetcher.user, 0, {page: page, per_page: 50}, function (err, data) {
         items.splice(0, 1);
         asyncTasks.splice(0, 1);
         if (firstPage) {
@@ -39,14 +33,14 @@ function asyncFetch(page, callback) {
         for (var i = 0; i < data.releases.length; i++) {
             ids.push(data.releases[i].id);
         }
-        if (typeof callback === "function") callback();
+        util.call(callback);
     });
 };
 
 function allFetchesDone(callback, callback2) {
     if (items.length == 0) {
-        console.log("Fetching done. " + ids.length + " items fetched.");
-        if (typeof callback === "function") callback(callback2);
+        console.log("Fetching collection done. " + ids.length + " records found.");
+        util.call(callback, callback2);
     } else {
         addItemsAsTask();
         async.parallel(asyncTasks, function () {
@@ -59,72 +53,103 @@ function addItemsAsTask() {
     items.forEach(function (item) {
         asyncTasks.push(function (callback) {
             asyncFetch(item, function () {
-                if (typeof callback === "function") callback();
+                util.call(callback);
             });
         });
     });
 };
 
-function getRandomRelease(callback) {
-    var ran = Math.floor(Math.random() * (ids.length - 1));
-    db.getRelease(ids[ran], function (err, data) {
-        current = {
-            "id": data.id,
-            "artist": data.artists[0].name,
-            "title": data.title,
-            "year": data.year,
-            "trackList": data.tracklist,
-            "format": data.formats[0].name,
-            "imgurl": data.images[0].resource_url
-        };
-        util.trackListTohhmmss(data.tracklist, function (duration) {
-            current.duration = duration;
-        })
-        if (typeof callback === "function") callback();
+function getReleaseInformation(id, callback) {
+    fetcher.db.getRelease(id, function (err, data) {
+        try {
+            current = {
+                "id": data.id,
+                "artist": data.artists[0].name,
+                "title": data.title,
+                "year": data.year,
+                //"trackList": data.tracklist,
+                "format": data.formats[0].name,
+                "imgurl": data.images[0].resource_url
+            };
+            util.trackListTohhmmss(data.tracklist, function (duration) {
+                current.duration = duration;
+                loadImage(callback);
+            });
+        } catch (err){
+            console.log("data: " + data);
+            console.log("err: " + err);
+        }
     });
 };
 
 
 function loadImage(callback) {
-    var imgs = fs.readdir(appRoot + "/cover", function (err, files) {
+    fs.readdir(appRoot + "/cover", function (err, files) {
         if (files.indexOf(current.id + ".jpg") != -1) {
-            console.log("We already have that image :-)");
-            if (typeof callback === "function") callback();
+            util.call(callback);
         } else {
-            db.getImage(current.imgurl, function (err, data, rateLimit) {
-                fs.writeFile(appRoot + '/cover/' + current.id + '.jpg', data, 'binary', function (err) {
-                    if (typeof callback === "function") callback();
+            fetcher.db.getImage(current.imgurl, function (err, data, rateLimit) {
+                var imgPath = appRoot + "/cover/" + current.id + ".jpg";
+                fs.writeFile(imgPath, data, 'binary', function (err) {
+                    if (err == null) {
+                        console.log(current.id + ".jpg was written to: " + imgPath);
+                    }
+                    util.call(callback);
                 });
             });
         }
     });
 };
 
-function process() {
-    getRandomRelease(function () {
-        loadImage(final);
+function validateCredentials() {
+    return fetcher.API_TOKEN.length == 40 && fetcher.user != "";
+}
+
+/**
+ * Initialization of a fetcher instance. All parameters are required and are set as instance variables.
+ * Returns true if all parameters are valid, false otherwise.
+ * @param apiToken The Discogs API token. See https://www.discogs.com/settings/developers
+ * @param username The Discogs name of the user whose collection will be fetched.
+ * @param callback The callback function will be executed after the initialization.
+ * The parameter will be true if apiToken and username meet the expectations, false otherwise.
+ */
+fetcher.init = function (apiToken, username, callback) {
+    this.API_TOKEN = apiToken;
+    this.user = username;
+    fetcher.discogs = new Discogs({userToken: this.API_TOKEN});
+    fetcher.db = fetcher.discogs.database();
+    fetcher.col = fetcher.discogs.user().collection();
+    util.call(callback, validateCredentials());
+};
+
+/**
+ * The fetcher will connect to the Discogs.com database and fetch information on the release with the given id.
+ * @param id The release id
+ * @param callback A callback that will be executed after the fetch is completed. The release data will be passed as a parameter.
+ */
+fetcher.fetchDetails = function (id, callback) {
+    console.log("fetchDetails for id: " + id);
+    current = {};
+    getReleaseInformation(id, function () {
+        util.call(callback, current);
     });
 };
 
-function final() {
-    finalcallback(current);
-}
-
-fetcher.fetch = function (apiToken, username, callback) {
-    this.API_TOKEN = apiToken;
-    this.user = username;
-    discogs = new Discogs({userToken: this.API_TOKEN});
-    col = discogs.user().collection();
-    db = discogs.database();
-    finalcallback = callback;
-
+/**
+ * The fetcher will connect to the Discogs.com database and will gather all releases of the users collection.
+ * @param callback TODO:
+ * @throws NoUserCredentialsError The intialization must be performed before fetching from the database.
+ */
+fetcher.fetchCollection = function (callback) {
+    if (!validateCredentials()) throw "NoUserCredentialsError";
     firstPage = true;
     ids = [];
-
     items.push(1);
     addItemsAsTask();
     async.parallel(asyncTasks, function () {
-        allFetchesDone(process);
+        allFetchesDone(function () {
+            util.call(callback, ids);
+        });
     });
 };
 

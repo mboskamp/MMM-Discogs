@@ -11,3 +11,6 @@
 .discogs-description {
     text-align: center;
 }
+.discogs-description > div {
+    height: 20px;
+}

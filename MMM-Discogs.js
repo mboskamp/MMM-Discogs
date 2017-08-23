@@ -1,28 +1,51 @@
-Module.register("MMM-Discogs",{
+var ids;
+var errors = {
+    noCredentialsError: "Please specify your Discogs API token and username in config.js. Get your API token at https://www.discogs.com/settings/developers",
+    fetchingError: "Error while fetching"
+};
+var updateInterval;
+var updateCounter;
+
+function getRandomRelease() {
+    var ran = Math.floor(Math.random() * (ids.length - 1));
+    return ids[ran];
+}
+
+Module.register("MMM-Discogs", {
 
     defaults: {
-        apiToken: "iOrDCbhdyeHYnnFmSXoAbaFhFqFkxmSginyKzAyX",
-        username: "TestSubjekt",
-        updateInterval: 7000,
+        updateDomInterval: 10 * 60 * 1000, //10 minutes
+        fetchCollection: 50, //update collection every 50 update dom events
         animationSpeed: 750
     },
 
     start: function () {
-        Log.info("Starting module: " + this.name);
+        this.log("Starting module: " + this.name);
         var self = this;
-        self.sendSocketNotification("FETCH_NEW", {"apiToken":self.defaults.apiToken, "username": self.defaults.username});
-        setInterval(function() {
-            self.sendSocketNotification("FETCH_NEW", {"apiToken":self.defaults.apiToken, "username": self.defaults.username});
-            self.updateDom(this.defaults.animationSpeed);
-        }, this.defaults.updateInterval);
+
+        updateCounter = self.defaults.fetchCollection;
+
+        if (typeof this.config.apiToken === "undefined" || typeof this.config.username === "undefined") {
+            this.error = errors.noCredentialsError;
+        } else {
+            this.error = false;
+            self.sendSocketNotification("INIT", {
+                "apiToken": self.config.apiToken,
+                "username": self.config.username
+            });
+        }
     },
 
-    getDom: function() {
+    getDom: function () {
         var wrapper = document.createElement("div");
-        if(!this.loaded){
-            wrapper.innerHTML = this.translate("LOADING")
-        }else{
-            wrapper.id = "discogs-wrapper";
+        if (!this.loaded) {
+            if (this.error) {
+                wrapper.innerHTML = this.error;
+            } else {
+                wrapper.innerHTML = this.translate("LOADING");
+            }
+        } else {
+            wrapper.className = "discogs-wrapper";
 
             var cover = document.createElement("div");
             cover.className = "discogs-cover";
@@ -33,7 +56,7 @@ Module.register("MMM-Discogs",{
             descsription.className = "discogs-description";
 
             var artist = document.createElement("div");
-            artist.classNam = "discogs-artist";
+            artist.className = "discogs-artist";
             artist.innerHTML = this.release.artist;
 
             var title = document.createElement("div");
@@ -53,15 +76,47 @@ Module.register("MMM-Discogs",{
         return wrapper;
     },
 
-    socketNotificationReceived: function(notification, payload) {
-        if (notification === "NEW_DATA") {
+    socketNotificationReceived: function (notification, payload) {
+        if (notification === "NEW_DATA_RELEASE") {
             this.loaded = true;
             this.release = payload;
+            this.updateDom(this.config.animationSpeed);
+
+        } else if (notification === "NEW_DATA_IDS") {
+            ids = payload;
+            updateCounter = this.defaults.fetchCollection;
+            this.fetchRelease();
+
+        } else if (notification === "INIT_COMPLETE") {
+            this.fetchCollection();
+
+        } else if (notification === "ERROR") {
+            this.loaded = false;
+            this.error = errors[payload];
         }
     },
+
     getStyles: function () {
-        return [
-            'style.css'
-        ];
+        return ["style.css"];
     },
+
+    fetchCollection: function () {
+        updateCounter = this.defaults.fetchCollection;
+        this.sendSocketNotification("FETCH_COLLECTION");
+    },
+
+    fetchRelease: function () {
+        var self = this;
+        window.clearInterval(updateInterval);
+        self.sendSocketNotification("FETCH_RELEASE", getRandomRelease());
+        updateInterval = setInterval(function () {
+            self.sendSocketNotification("FETCH_RELEASE", getRandomRelease());
+            updateCounter--;
+            if (updateCounter <= 0) self.fetchCollection();
+        }, self.config.updateDomInterval);
+    },
+
+    log: function (payload) {
+        this.sendSocketNotification("LOG", payload);
+    }
 });
