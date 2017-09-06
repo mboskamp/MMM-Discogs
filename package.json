@@ -1,6 +1,6 @@
 {
   "name": "mmm-discogs",
-  "version": "0.2",
+  "version": "0.0.2",
   "description": "MagicMirror Module for displaying information from your discogs.com profile",
   "main": "MMM-Discogs.js",
   "scripts": {
