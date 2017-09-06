@@ -1,6 +1,6 @@
 {
   "name": "mmm-discogs",
-  "version": "1.0.0",
+  "version": "0.2",
   "description": "MagicMirror Module for displaying information from your discogs.com profile",
   "main": "MMM-Discogs.js",
   "scripts": {
@@ -24,6 +24,6 @@
   "homepage": "https://github.com/mboskamp/MMM-Discogs#readme",
   "dependencies": {
     "async": "^2.1.5",
-    "disconnect": "^1.1.0"
+    "disconnect": "^1.2.1"
   }
 }

@@ -1,5 +1,10 @@
 var util = {};
 
+/**
+ * Helper function that converts the duration of a record in a given Discogs.com API response into a version that is human-readable.
+ * @param trackList The track list that is part of a Discogs.com API response for a specific record. (JSON)
+ * @param callback A function that is called after the conversion. The formatted result is passed as param. Should not be null. Must be a function.
+ */
 util.trackListTohhmmss = function (trackList, callback) {
     var sec = 0;
     trackList.forEach(function (track) {

@@ -14,25 +14,23 @@ function getRandomRelease() {
 Module.register("MMM-Discogs", {
 
     defaults: {
+        apiToken: "",
+        username: "",
         updateDomInterval: 10 * 60 * 1000, //10 minutes
         fetchCollection: 50, //update collection every 50 update dom events
         animationSpeed: 750
     },
 
     start: function () {
-        this.log("Starting module: " + this.name);
         var self = this;
 
         updateCounter = self.defaults.fetchCollection;
 
-        if (typeof this.config.apiToken === "undefined" || typeof this.config.username === "undefined") {
+        if (this.config.apiToken == "" || this.config.username == "") {
             this.error = errors.noCredentialsError;
         } else {
             this.error = false;
-            self.sendSocketNotification("INIT", {
-                "apiToken": self.config.apiToken,
-                "username": self.config.username
-            });
+            self.sendSocketNotification("INIT", this.config);
         }
     },
 
@@ -114,9 +112,5 @@ Module.register("MMM-Discogs", {
             updateCounter--;
             if (updateCounter <= 0) self.fetchCollection();
         }, self.config.updateDomInterval);
-    },
-
-    log: function (payload) {
-        this.sendSocketNotification("LOG", payload);
     }
 });

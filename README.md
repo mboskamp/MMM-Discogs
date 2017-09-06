@@ -71,6 +71,6 @@ To display the module insert it in the config.js file. Here is an example:
 | ------- | --- | --- | --- |
 | username | The username of your [discogs.com](https://www.discogs.com/) profile. | **String**  | **required** |
 | apiToken | In order to access your Discogs data you need an API token which can be aquired [here](https://www.discogs.com/de/settings/developers).| **String** | **required** |
-| updateDomInterval |The time (in miliseconds) after which a new record should be show. | **Integer** | **600.000** <br> **(10 minutes)** |
+| updateDomInterval |The time (in miliseconds) after which a new record should be show. | **Integer** | **600.000** <br> **(10&nbsp;minutes)** |
 | fetchCollection | The amount of times the DOM will update without prior collection re-fetch. | **Integer** | **50** |
 | animationSpeed | The duration (in miliseconds) of the reload animation.  | **Integer**  | **750** |
