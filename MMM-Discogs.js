@@ -34,6 +34,14 @@ Module.register("MMM-Discogs", {
         }
     },
 
+    getCommands: function(commander) {
+        commander.add({
+            command: 'discogsNext',
+            callback: 'fetchRelease',
+            description: "Get the next release from Discogs with '/discogsNext'",
+        })
+      },
+
     getDom: function () {
         var wrapper = document.createElement("div");
         if (!this.loaded) {
