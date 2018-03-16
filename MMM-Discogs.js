@@ -98,6 +98,14 @@ Module.register("MMM-Discogs", {
         return ["mmm-disocogs-style.css"];
     },
 
+    getCommands: function(commander) {
+          commander.add({
+              command: 'discogsNext',
+              callback: 'fetchRelease',
+              description: "Get the next release from Discogs.",
+          })
+        },
+
     fetchCollection: function () {
         updateCounter = this.defaults.fetchCollection;
         this.sendSocketNotification("FETCH_COLLECTION");
