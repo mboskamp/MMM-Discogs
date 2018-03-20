@@ -8,7 +8,7 @@ To use it you need to aquire an API token from [here](https://www.discogs.com/de
 <img src="cover/sample_cover.png"/>
 
 ## Installation
-Just clone the module into your MagicMirror modules folder and execute `npm install` in the module's directory.
+Clone the module into your MagicMirror modules folder and execute `npm install` in the module's directory.
 ```
 git clone https://github.com/mboskamp/MMM-Discogs.git
 cd MMM-Discogs
